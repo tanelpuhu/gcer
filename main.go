@@ -38,6 +38,9 @@ func Chdir(path string) {
 }
 
 func RunGC(path string) {
+	wd, _ := os.Getwd()
+	defer Chdir(wd)
+	Chdir(path)
 	_, err := exec.Command("git", "gc", "--aggressive").Output()
 	if err != nil {
 		panic(err)
@@ -63,10 +66,7 @@ func FmtInt(size int64) string {
 func SizeAndRunGC(path string) {
 	size_before := GetDirSize(path)
 	fmt.Printf("%-54s %11s -> ", path, FmtInt(size_before))
-	wd, _ := os.Getwd()
-	Chdir(path)
 	RunGC(path)
-	Chdir(wd)
 	size_after := GetDirSize(path)
 	fmt.Printf("%-14s\t%v%%\n", FmtInt(size_after), 100*size_after/size_before)
 }
@@ -89,5 +89,9 @@ func WalkCallback(path string, info os.FileInfo, err error) error {
 }
 
 func main() {
-	filepath.Walk(".", WalkCallback)
+	root := "."
+	if len(os.Args) > 1 {
+		root = os.Args[1]
+	}
+	filepath.Walk(root, WalkCallback)
 }
