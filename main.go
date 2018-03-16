@@ -7,7 +7,7 @@ import (
 	"path/filepath"
 )
 
-func FileExists(path string) bool {
+func fileExists(path string) bool {
 	if _, err := os.Stat(path); err != nil {
 		if os.IsNotExist(err) {
 			return false
@@ -16,7 +16,7 @@ func FileExists(path string) bool {
 	return true
 }
 
-func GetDirSize(path string) int64 {
+func getDirSize(path string) int64 {
 	var size int64
 	err := filepath.Walk(path, func(_ string, info os.FileInfo, err error) error {
 		if !info.IsDir() {
@@ -31,23 +31,23 @@ func GetDirSize(path string) int64 {
 
 }
 
-func Chdir(path string) {
+func chdir(path string) {
 	if err := os.Chdir(path); err != nil {
 		panic(err)
 	}
 }
 
-func RunGC(path string) {
+func runGC(path string) {
 	wd, _ := os.Getwd()
-	defer Chdir(wd)
-	Chdir(path)
+	defer chdir(wd)
+	chdir(path)
 	_, err := exec.Command("git", "gc", "--aggressive").Output()
 	if err != nil {
 		panic(err)
 	}
 }
 
-func FmtInt(size int64) string {
+func fmtInt(size int64) string {
 	unit := "b"
 	// i know, if if if'y
 	if size > 1024 {
@@ -63,15 +63,15 @@ func FmtInt(size int64) string {
 	return result
 }
 
-func SizeAndRunGC(path string) {
-	size_before := GetDirSize(path)
-	fmt.Printf("%-54s %11s -> ", path, FmtInt(size_before))
-	RunGC(path)
-	size_after := GetDirSize(path)
-	fmt.Printf("%-14s\t%v%%\n", FmtInt(size_after), 100*size_after/size_before)
+func sizeAndRunGC(path string) {
+	sizeBefore := getDirSize(path)
+	fmt.Printf("%-54s %11s -> ", path, fmtInt(sizeBefore))
+	runGC(path)
+	sizeAfter := getDirSize(path)
+	fmt.Printf("%-14s\t%v%%\n", fmtInt(sizeAfter), 100*sizeAfter/sizeBefore)
 }
 
-func WalkCallback(path string, info os.FileInfo, err error) error {
+func walkCallback(path string, info os.FileInfo, err error) error {
 	if err != nil {
 		panic(err)
 	}
@@ -80,8 +80,8 @@ func WalkCallback(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			panic(err)
 		}
-		if FileExists(filepath.Join(path, "HEAD")) {
-			SizeAndRunGC(basepath)
+		if fileExists(filepath.Join(path, "HEAD")) {
+			sizeAndRunGC(basepath)
 		}
 		return filepath.SkipDir
 	}
@@ -93,5 +93,5 @@ func main() {
 	if len(os.Args) > 1 {
 		root = os.Args[1]
 	}
-	filepath.Walk(root, WalkCallback)
+	filepath.Walk(root, walkCallback)
 }
