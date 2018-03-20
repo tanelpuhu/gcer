@@ -50,13 +50,13 @@ func runGC(path string) {
 func fmtInt(size int64) string {
 	unit := "b"
 	// i know, if if if'y
-	if size > 1024 {
+	if size >= 1024 {
 		unit, size = "Kb", size/1024
 	}
-	if size > 1024 {
+	if size >= 1024 {
 		unit, size = "Mb", size/1024
 	}
-	if size > 1024 {
+	if size >= 1024 {
 		unit, size = "Gb", size/1024
 	}
 	result := fmt.Sprintf("%d%s", size, unit)

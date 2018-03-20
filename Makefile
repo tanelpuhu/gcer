@@ -1,6 +1,10 @@
-.PHONY: build clean
+.PHONY: test build clean
 
-build:
+test:
+	go fmt
+	go test
+
+build: test
 	golint -set_exit_status
 	@mkdir -p build
 	GOOS=linux GOARCH=amd64 go build -o build/gcer_linux_amd64 main.go
