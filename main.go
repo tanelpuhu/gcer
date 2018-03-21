@@ -93,7 +93,7 @@ func walkCallback(path string, info os.FileInfo, err error) error {
 		if err != nil {
 			panic(err)
 		}
-		if fileExists(filepath.Join(path, "HEAD")) {
+		if fileExists(filepath.Join(path, "HEAD")) && fileExists(filepath.Join(path, "refs")) {
 			sizeAndRunGC(basepath)
 		}
 		return filepath.SkipDir
