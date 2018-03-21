@@ -1,11 +1,18 @@
 package main
 
 import (
+	"flag"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
+	"time"
 )
+
+const gcerVersion string = "0.0.5"
+
+var flagVersion bool
+var flagAgressive bool
 
 func fileExists(path string) bool {
 	if _, err := os.Stat(path); err != nil {
@@ -37,14 +44,20 @@ func chdir(path string) {
 	}
 }
 
-func runGC(path string) {
+func runGC(path string) time.Duration {
 	wd, _ := os.Getwd()
 	defer chdir(wd)
 	chdir(path)
-	_, err := exec.Command("git", "gc", "--aggressive").Output()
+	start := time.Now()
+	lastArg := "--auto"
+	if flagAgressive {
+		lastArg = "--aggressive"
+	}
+	_, err := exec.Command("git", "gc", lastArg).Output()
 	if err != nil {
 		panic(err)
 	}
+	return time.Now().Sub(start)
 }
 
 func fmtInt(size int64) string {
@@ -65,10 +78,10 @@ func fmtInt(size int64) string {
 
 func sizeAndRunGC(path string) {
 	sizeBefore := getDirSize(path)
-	fmt.Printf("%-54s %11s -> ", path, fmtInt(sizeBefore))
-	runGC(path)
+	fmt.Printf("%-64s %11s -> ", path, fmtInt(sizeBefore))
+	elapsed := runGC(path)
 	sizeAfter := getDirSize(path)
-	fmt.Printf("%-14s\t%v%%\n", fmtInt(sizeAfter), 100*sizeAfter/sizeBefore)
+	fmt.Printf("%-14s\t%v%%\t%.2fs\n", fmtInt(sizeAfter), 100*sizeAfter/sizeBefore, elapsed.Seconds())
 }
 
 func walkCallback(path string, info os.FileInfo, err error) error {
@@ -88,10 +101,20 @@ func walkCallback(path string, info os.FileInfo, err error) error {
 	return nil
 }
 
+func init() {
+	flag.BoolVar(&flagVersion, "V", false, "Print version")
+	flag.BoolVar(&flagAgressive, "a", false, "use --aggressive")
+	flag.Parse()
+}
+
 func main() {
+	if flagVersion {
+		fmt.Printf("gcer %v\n", gcerVersion)
+		return
+	}
 	root := "."
-	if len(os.Args) > 1 {
-		root = os.Args[1]
+	if len(flag.Args()) > 1 {
+		root = flag.Args()[1]
 	}
 	filepath.Walk(root, walkCallback)
 }
