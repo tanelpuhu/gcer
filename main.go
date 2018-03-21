@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const gcerVersion string = "0.0.5"
+const gcerVersion string = "0.0.6"
 
 var flagVersion bool
 var flagAgressive bool
@@ -112,9 +112,11 @@ func main() {
 		fmt.Printf("gcer %v\n", gcerVersion)
 		return
 	}
-	root := "."
-	if len(flag.Args()) > 1 {
-		root = flag.Args()[1]
+	args := flag.Args()
+	if len(flag.Args()) == 0 {
+		args = append(args, ".")
 	}
-	filepath.Walk(root, walkCallback)
+	for _, arg := range args {
+		filepath.Walk(arg, walkCallback)
+	}
 }
