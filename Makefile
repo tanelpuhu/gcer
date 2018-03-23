@@ -3,7 +3,7 @@
 test:
 	golint -set_exit_status
 	go fmt
-	go test
+	go test -v
 
 build: test
 	@mkdir -p build
