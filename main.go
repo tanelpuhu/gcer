@@ -9,7 +9,7 @@ import (
 	"time"
 )
 
-const gcerVersion string = "0.0.6"
+const gcerVersion string = "0.0.7"
 
 var flagVersion bool
 var flagAgressive bool
@@ -81,7 +81,11 @@ func sizeAndRunGC(path string) {
 	fmt.Printf("%-64s %11s -> ", path, fmtInt(sizeBefore))
 	elapsed := runGC(path)
 	sizeAfter := getDirSize(path)
-	fmt.Printf("%-14s\t%v%%\t%.2fs\n", fmtInt(sizeAfter), 100*sizeAfter/sizeBefore, elapsed.Seconds())
+	fmt.Printf("%-14s %10s %7ss\n",
+		fmtInt(sizeAfter),
+		fmt.Sprintf("%.2f%%", 100*float32(sizeAfter)/float32(sizeBefore)),
+		fmt.Sprintf("%.2f", elapsed.Seconds()),
+	)
 }
 
 func walkCallback(path string, info os.FileInfo, err error) error {
@@ -116,7 +120,13 @@ func main() {
 	if len(flag.Args()) == 0 {
 		args = append(args, ".")
 	}
+	start := time.Now()
 	for _, arg := range args {
 		filepath.Walk(arg, walkCallback)
 	}
+	fmt.Printf("%-105s %7ss\n",
+		"",
+		fmt.Sprintf("%.2f", time.Now().Sub(start).Seconds()),
+	)
+
 }
