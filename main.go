@@ -3,16 +3,17 @@ package main
 import (
 	"flag"
 	"fmt"
+	"log"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"time"
 )
 
-const gcerVersion string = "0.0.7"
+const gcerVersion string = "0.0.8"
 
 var flagVersion bool
-var flagAgressive bool
+var flagAggressive bool
 
 func fileExists(path string) bool {
 	if _, err := os.Stat(path); err != nil {
@@ -32,7 +33,7 @@ func getDirSize(path string) int64 {
 		return err
 	})
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	return size
 
@@ -49,13 +50,13 @@ func runGC(path string) time.Duration {
 	defer chdir(wd)
 	chdir(path)
 	start := time.Now()
-	lastArg := "--auto"
-	if flagAgressive {
-		lastArg = "--aggressive"
+	args := []string{"gc"}
+	if flagAggressive {
+		args = append(args, "--aggressive")
 	}
-	_, err := exec.Command("git", "gc", lastArg).Output()
+	_, err := exec.Command("git", args...).Output()
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	return time.Now().Sub(start)
 }
@@ -90,12 +91,12 @@ func sizeAndRunGC(path string) {
 
 func walkCallback(path string, info os.FileInfo, err error) error {
 	if err != nil {
-		panic(err)
+		log.Fatal(err)
 	}
 	if info.IsDir() && info.Name() == ".git" {
 		basepath, err := filepath.Abs(filepath.Dir(path))
 		if err != nil {
-			panic(err)
+			log.Fatal(err)
 		}
 		if fileExists(filepath.Join(path, "HEAD")) && fileExists(filepath.Join(path, "refs")) {
 			sizeAndRunGC(basepath)
@@ -105,9 +106,16 @@ func walkCallback(path string, info os.FileInfo, err error) error {
 	return nil
 }
 
+func checkExec() {
+	_, err := exec.LookPath("git")
+	if err != nil {
+		log.Fatal("git not present in $PATH")
+	}
+}
+
 func init() {
 	flag.BoolVar(&flagVersion, "V", false, "Print version")
-	flag.BoolVar(&flagAgressive, "a", false, "use --aggressive")
+	flag.BoolVar(&flagAggressive, "a", false, "use --aggressive")
 	flag.Parse()
 }
 
@@ -116,6 +124,8 @@ func main() {
 		fmt.Printf("gcer %v\n", gcerVersion)
 		return
 	}
+	checkExec()
+
 	args := flag.Args()
 	if len(flag.Args()) == 0 {
 		args = append(args, ".")
