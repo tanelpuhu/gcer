@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const gcerVersion string = "0.0.8"
+const gcerVersion string = "0.0.9"
 
 var flagVersion bool
 var flagAggressive bool
@@ -54,8 +54,7 @@ func runGC(path string) time.Duration {
 	if flagAggressive {
 		args = append(args, "--aggressive")
 	}
-	_, err := exec.Command("git", args...).Output()
-	if err != nil {
+	if err := exec.Command("git", args...).Run(); err != nil {
 		log.Fatal(err)
 	}
 	return time.Now().Sub(start)
@@ -82,10 +81,10 @@ func sizeAndRunGC(path string) {
 	fmt.Printf("%-64s %11s -> ", path, fmtInt(sizeBefore))
 	elapsed := runGC(path)
 	sizeAfter := getDirSize(path)
-	fmt.Printf("%-14s %10s %7ss\n",
+	fmt.Printf("%-14s %10s %8s\n",
 		fmtInt(sizeAfter),
 		fmt.Sprintf("%.2f%%", 100*float32(sizeAfter)/float32(sizeBefore)),
-		fmt.Sprintf("%.2f", elapsed.Seconds()),
+		fmt.Sprintf("%s", elapsed.Truncate(time.Millisecond).String()),
 	)
 }
 
@@ -134,9 +133,9 @@ func main() {
 	for _, arg := range args {
 		filepath.Walk(arg, walkCallback)
 	}
-	fmt.Printf("%-105s %7ss\n",
+	fmt.Printf("%-105s %8s\n",
 		"",
-		fmt.Sprintf("%.2f", time.Now().Sub(start).Seconds()),
+		fmt.Sprintf("%s", time.Now().Sub(start).Truncate(time.Millisecond).String()),
 	)
 
 }
