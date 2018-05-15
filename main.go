@@ -139,9 +139,11 @@ func main() {
 	for _, arg := range args {
 		filepath.Walk(arg, walkCallback)
 	}
-	fmt.Printf("%-94s %10s %8s\n",
-		"",
-		fmt.Sprintf("%.2f%%", 100*float32(sizeAfterTotal)/float32(sizeBeforeTotal)),
-		fmt.Sprintf("%s", time.Now().Sub(start).Truncate(time.Millisecond).String()),
-	)
+	if sizeAfterTotal > 0 && sizeBeforeTotal > 0 {
+		fmt.Printf("%-94s %10s %8s\n",
+			"",
+			fmt.Sprintf("%.2f%%", 100*float32(sizeAfterTotal)/float32(sizeBeforeTotal)),
+			fmt.Sprintf("%s", time.Now().Sub(start).Truncate(time.Millisecond).String()),
+		)
+	}
 }
