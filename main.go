@@ -10,7 +10,7 @@ import (
 	"time"
 )
 
-const gcerVersion string = "0.1.0"
+const gcerVersion string = "0.1.1"
 
 var (
 	flagAggressive  bool
@@ -140,8 +140,10 @@ func main() {
 		filepath.Walk(arg, walkCallback)
 	}
 	if sizeAfterTotal > 0 && sizeBeforeTotal > 0 {
-		fmt.Printf("%-94s %10s %8s\n",
+		fmt.Printf("%-64s %11s -> %-14s %10s %8s\n",
 			"",
+			fmtInt(sizeBeforeTotal),
+			fmtInt(sizeAfterTotal),
 			fmt.Sprintf("%.2f%%", 100*float32(sizeAfterTotal)/float32(sizeBeforeTotal)),
 			fmt.Sprintf("%s", time.Now().Sub(start).Truncate(time.Millisecond).String()),
 		)
