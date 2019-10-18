@@ -10,11 +10,13 @@ import (
 	"time"
 )
 
-const gcerVersion string = "0.1.1"
+const gcerVersion string = "0.1.2"
 
 var (
-	flagAggressive  bool
-	flagVersion     bool
+	flags struct {
+		aggressive bool
+		version    bool
+	}
 	sizeAfterTotal  int64
 	sizeBeforeTotal int64
 )
@@ -55,7 +57,7 @@ func runGC(path string) time.Duration {
 	chdir(path)
 	start := time.Now()
 	args := []string{"gc"}
-	if flagAggressive {
+	if flags.aggressive {
 		args = append(args, "--aggressive")
 	}
 	if err := exec.Command("git", args...).Run(); err != nil {
@@ -111,25 +113,18 @@ func walkCallback(path string, info os.FileInfo, err error) error {
 	return nil
 }
 
-func checkExec() {
+func main() {
+	flag.BoolVar(&flags.version, "V", false, "Print version")
+	flag.BoolVar(&flags.aggressive, "a", false, "use --aggressive")
+	flag.Parse()
+	if flags.version {
+		fmt.Printf("gcer %v\n", gcerVersion)
+		return
+	}
 	_, err := exec.LookPath("git")
 	if err != nil {
 		log.Fatal("git not present in $PATH")
 	}
-}
-
-func init() {
-	flag.BoolVar(&flagVersion, "V", false, "Print version")
-	flag.BoolVar(&flagAggressive, "a", false, "use --aggressive")
-	flag.Parse()
-}
-
-func main() {
-	if flagVersion {
-		fmt.Printf("gcer %v\n", gcerVersion)
-		return
-	}
-	checkExec()
 
 	args := flag.Args()
 	if len(flag.Args()) == 0 {
